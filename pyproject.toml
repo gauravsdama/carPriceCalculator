@@ -1,0 +1,26 @@
+[project]
+name = "car-price-calculator"
+version = "0.2.0"
+description = "Educational Mercedes-Benz listing-price estimator"
+authors = [{ name = "Gaurav Dama" }]
+requires-python = ">=3.11,<3.15"
+dependencies = [
+  "Flask>=3.1,<4",
+  "pandas>=2.2,<3",
+  "scikit-learn>=1.6,<2",
+]
+
+[dependency-groups]
+dev = [
+  "pip-audit>=2.9,<3",
+  "pytest>=9.0.3,<10",
+  "ruff>=0.12,<1",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

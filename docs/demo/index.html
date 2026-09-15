@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A browser-only educational demo of a saved Mercedes-Benz listing-price model.">
+  <title>Car Price Calculator · Saved model demo</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <a class="brand" href="./" aria-label="Car Price Calculator home">
+        <span class="brand-mark" aria-hidden="true">CPC</span>
+        <span>Car Price Calculator</span>
+      </a>
+      <span class="mode">Saved model demo</span>
+    </header>
+
+    <section class="intro">
+      <div>
+        <h1>Test a listing estimate in your browser.</h1>
+        <p>This static demo runs a compact Ridge model trained on a saved snapshot of Mercedes-Benz asking prices. Nothing is sent to a server.</p>
+      </div>
+      <dl class="evidence" aria-label="Saved model evidence">
+        <div><dt>Listings</dt><dd id="row-count">—</dd></div>
+        <div><dt>Holdout MAE</dt><dd id="mae">—</dd></div>
+        <div><dt>Data updated</dt><dd id="data-date">—</dd></div>
+      </dl>
+    </section>
+
+    <section class="workspace" aria-label="Listing estimate">
+      <form id="estimate-form" class="controls">
+        <label for="model">Mercedes-Benz model</label>
+        <select id="model" name="model" required disabled>
+          <option>Loading models…</option>
+        </select>
+
+        <div class="field-pair">
+          <div>
+            <label for="year">Model year</label>
+            <input id="year" name="year" type="number" required>
+          </div>
+          <div>
+            <label for="rating">Dealer rating (0–5)</label>
+            <input id="rating" name="rating" type="number" min="0" max="5" step="0.1" required>
+          </div>
+        </div>
+
+        <label for="mileage">Mileage (miles)</label>
+        <input id="mileage" name="mileage" type="number" min="0" step="500" required>
+
+        <button id="estimate-button" type="submit" disabled>Estimate listing price</button>
+        <p id="status" class="status" role="status">Loading saved model…</p>
+      </form>
+
+      <div class="output" aria-live="polite">
+        <span>Estimated listing price</span>
+        <strong id="estimate">—</strong>
+        <div class="odometer" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <p>Ridge snapshot output from the saved dataset. The local Flask app uses a separate Random Forest model.</p>
+      </div>
+    </section>
+
+    <section class="notes">
+      <h2>Read the estimate correctly</h2>
+      <p>Educational estimate from saved listing data—not a live valuation or buying recommendation. Asking prices are not sale prices, dealer rating is not vehicle condition, and the model omits trim, location, options, accident history, and market changes.</p>
+      <p>Evaluation uses one deterministic random 80/20 holdout. It does not measure future-market performance or accuracy on models absent from the dataset.</p>
+      <p>Dataset: <a href="https://www.kaggle.com/datasets/danishammar/usa-mercedes-benz-prices-dataset">USA Mercedes Benz Prices Dataset by Danish Ammar</a>, version 1, Apache-2.0. The checked-in data reshapes the original name and mileage fields.</p>
+    </section>
+  </main>
+</body>
+</html>
+

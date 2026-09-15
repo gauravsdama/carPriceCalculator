@@ -8,11 +8,10 @@ from flask import Flask, render_template_string, request
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-
 
 DATA_PATH = Path(__file__).with_name("usa_mercedes_benz_prices.csv")
 
@@ -27,7 +26,7 @@ PAGE_TEMPLATE = """
     <title>Mercedes-Benz Price Calculator</title>
     <style>
         :root {
-            --bg: #f4f7fa;
+            --bg: #eef1f3;
             --ink: #111827;
             --muted: #5b677a;
             --panel: #ffffff;
@@ -45,12 +44,8 @@ PAGE_TEMPLATE = """
             min-width: 320px;
             margin: 0;
             color: var(--ink);
-            background:
-                linear-gradient(120deg, rgba(36, 87, 166, 0.11), transparent 34%),
-                linear-gradient(90deg, rgba(17, 24, 39, 0.045) 1px, transparent 1px),
-                var(--bg);
-            background-size: auto, 92px 92px, auto;
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(145deg, #f8fafb 0%, var(--bg) 62%, #e1e6ea 100%);
+            font-family: "Avenir Next", Avenir, ui-sans-serif, system-ui, -apple-system, sans-serif;
         }
 
         .shell {
@@ -79,11 +74,12 @@ PAGE_TEMPLATE = """
             width: 44px;
             height: 44px;
             place-items: center;
-            border-radius: 8px;
+            border-radius: 50%;
             background: var(--ink);
             color: #ffffff;
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            font-size: 0.78rem;
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
         }
 
         .layout {
@@ -95,13 +91,11 @@ PAGE_TEMPLATE = """
 
         h1, h2, p { margin-top: 0; }
 
-        .eyebrow {
-            margin: 0 0 12px;
-            color: var(--blue);
+        .snapshot {
+            margin: 0;
+            color: var(--muted);
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
             font-size: 0.78rem;
-            font-weight: 900;
-            text-transform: uppercase;
         }
 
         h1 {
@@ -195,6 +189,26 @@ PAGE_TEMPLATE = """
             line-height: 1;
         }
 
+        .result small, .disclaimer {
+            color: #315348;
+            line-height: 1.5;
+        }
+
+        .alert {
+            border-left: 4px solid #a33b2e;
+            padding: 12px 14px;
+            background: #fff2ef;
+            color: #76291f;
+            line-height: 1.5;
+        }
+
+        .disclaimer {
+            margin: 18px 0 0;
+            border-top: 1px solid var(--line);
+            padding-top: 16px;
+            font-size: 0.86rem;
+        }
+
         .metric-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -253,17 +267,16 @@ PAGE_TEMPLATE = """
     <main class="shell">
         <header class="topbar">
             <div class="brand">
-                <span class="brand-mark">MB</span>
+                <span class="brand-mark">CPC</span>
                 <span>Car Price Calculator</span>
             </div>
-            <p class="eyebrow">RandomForest estimator</p>
+            <p class="snapshot">{{ summary.rows }} saved listings · Random Forest</p>
         </header>
 
         <section class="layout">
             <div>
-                <p class="eyebrow">Mercedes-Benz used market</p>
-                <h1>Estimate a fair listing price from model, year, mileage, and rating.</h1>
-                <p>This calculator cleans the local Mercedes-Benz listing dataset, trains a reusable scikit-learn pipeline, and returns an estimated price without command-line prompts.</p>
+                <h1>Explore a dataset-based listing estimate.</h1>
+                <p>This local demo trains on a saved snapshot of Mercedes-Benz asking prices. It is useful for exploring the model, not valuing a specific vehicle.</p>
 
                 <div class="metric-grid" aria-label="Model summary">
                     <div class="metric">
@@ -290,37 +303,42 @@ PAGE_TEMPLATE = """
             <form class="panel form-grid" method="POST">
                 {% if prediction %}
                     <div class="result" aria-live="polite">
-                        <span>Estimated price</span>
+                        <span>Estimated listing price</span>
                         <strong>{{ prediction }}</strong>
+                        <small>Random Forest output from the saved dataset. Actual prices may differ.</small>
                     </div>
                 {% endif %}
 
+                {% if error %}
+                    <div class="alert" role="alert">{{ error }}</div>
+                {% endif %}
+
                 <div>
-                    <label for="model">Model</label>
-                    <input id="model" name="model" list="models" value="{{ values.model }}" required>
-                    <datalist id="models">
+                    <label for="model">Mercedes-Benz model</label>
+                    <select id="model" name="model" required>
                         {% for model in models %}
-                            <option value="{{ model }}"></option>
+                            <option value="{{ model }}" {% if model == values.model %}selected{% endif %}>{{ model }}</option>
                         {% endfor %}
-                    </datalist>
+                    </select>
                 </div>
 
                 <div>
-                    <label for="year">Year</label>
-                    <input id="year" name="year" type="number" min="{{ summary.min_year }}" max="{{ summary.max_year + 1 }}" value="{{ values.year }}" required>
+                    <label for="year">Model year</label>
+                    <input id="year" name="year" type="number" min="{{ summary.min_year }}" max="{{ summary.max_year }}" value="{{ values.year }}" required>
                 </div>
 
                 <div>
-                    <label for="mileage">Mileage</label>
-                    <input id="mileage" name="mileage" type="number" min="0" step="500" value="{{ values.mileage }}" required>
+                    <label for="mileage">Mileage (miles)</label>
+                    <input id="mileage" name="mileage" type="number" min="0" max="{{ summary.max_mileage }}" step="500" value="{{ values.mileage }}" required>
                 </div>
 
                 <div>
-                    <label for="rating">Dealer rating</label>
+                    <label for="rating">Dealer rating (0–5)</label>
                     <input id="rating" name="rating" type="number" min="0" max="5" step="0.1" value="{{ values.rating }}" required>
                 </div>
 
-                <button type="submit">Estimate Price</button>
+                <button type="submit">Estimate listing price</button>
+                <p class="disclaimer">Educational estimate from saved listing data—not a live valuation or buying recommendation.</p>
             </form>
         </section>
     </main>
@@ -341,17 +359,9 @@ def load_data() -> pd.DataFrame:
     mileage_remainder = pd.to_numeric(df["Mileage"], errors="coerce").fillna(0)
     df["Mileage"] = (mileage_k * 1000) + mileage_remainder
 
-    df["Model"] = (
-        df["Model"]
-        .astype(str)
-        .str.strip()
-        .str.replace(r"\s+", " ", regex=True)
-    )
+    df["Model"] = df["Model"].astype(str).str.strip().str.replace(r"\s+", " ", regex=True)
     df["Review Count"] = (
-        df["Review Count"]
-        .astype(str)
-        .str.replace(",", "", regex=False)
-        .astype(float)
+        df["Review Count"].astype(str).str.replace(",", "", regex=False).astype(float)
     )
     df["Price"] = (
         df["Price"]
@@ -413,7 +423,7 @@ def train_model():
                     n_estimators=180,
                     random_state=42,
                     min_samples_leaf=2,
-                    n_jobs=-1,
+                    n_jobs=1,
                 ),
             ),
         ]
@@ -421,15 +431,18 @@ def train_model():
     pipeline.fit(x_train, y_train)
     y_pred = pipeline.predict(x_test)
     rmse = mean_squared_error(y_test, y_pred) ** 0.5
+    mae = mean_absolute_error(y_test, y_pred)
 
     summary = {
         "rows": f"{len(df):,}",
         "r2": f"{r2_score(y_test, y_pred):.2f}",
         "rmse": _money(rmse),
+        "mae": _money(mae),
         "min_year": int(df["Year"].min()),
         "max_year": int(df["Year"].max()),
         "year_range": f"{int(df['Year'].min())}-{int(df['Year'].max())}",
         "mileage_range": f"{int(df['Mileage'].min()):,}-{int(df['Mileage'].max()):,} mi",
+        "max_mileage": int(df["Mileage"].max()),
         "median_price": _money(df["Price"].median()),
     }
     models = sorted(df["Model"].unique())
@@ -449,6 +462,46 @@ def predict_car_price(model: str, mileage: float, rating: float, year: int) -> f
     return max(0.0, float(pipeline.predict(input_data)[0]))
 
 
+def validate_values(form, models: list[str], summary: dict) -> tuple[dict, str | None]:
+    values = {
+        "model": (form.get("model") or "").strip(),
+        "year": (form.get("year") or "").strip(),
+        "mileage": (form.get("mileage") or "").strip(),
+        "rating": (form.get("rating") or "").strip(),
+    }
+
+    try:
+        year_number = float(values["year"])
+        mileage_number = float(values["mileage"])
+        rating_number = float(values["rating"])
+    except ValueError:
+        return values, "Use numbers for model year, mileage, and dealer rating."
+
+    if values["model"] not in models:
+        return values, "Choose a Mercedes-Benz model from the dataset."
+    if (
+        not year_number.is_integer()
+        or not summary["min_year"] <= year_number <= summary["max_year"]
+    ):
+        return (
+            values,
+            f"Model year must be a whole number from {summary['min_year']} to {summary['max_year']}.",
+        )
+    if not 0 <= mileage_number <= summary["max_mileage"]:
+        return values, f"Mileage must be between 0 and {summary['max_mileage']:,}."
+    if not 0 <= rating_number <= 5:
+        return values, "Dealer rating must be between 0 and 5."
+
+    values.update(
+        {
+            "year": int(year_number),
+            "mileage": int(mileage_number),
+            "rating": rating_number,
+        }
+    )
+    return values, None
+
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     _, models, summary = train_model()
@@ -460,24 +513,19 @@ def index():
         "rating": 4.6,
     }
 
+    prediction = None
+    error = None
     if request.method == "POST":
-        values.update(
-            {
-                "model": request.form.get("model", values["model"]),
-                "year": int(float(request.form.get("year", values["year"]))),
-                "mileage": int(float(request.form.get("mileage", values["mileage"]))),
-                "rating": float(request.form.get("rating", values["rating"])),
-            }
-        )
-
-    prediction = _money(
-        predict_car_price(
-            values["model"],
-            values["mileage"],
-            values["rating"],
-            values["year"],
-        )
-    )
+        values, error = validate_values(request.form, models, summary)
+        if error is None:
+            prediction = _money(
+                predict_car_price(
+                    values["model"],
+                    values["mileage"],
+                    values["rating"],
+                    values["year"],
+                )
+            )
 
     return render_template_string(
         PAGE_TEMPLATE,
@@ -485,8 +533,9 @@ def index():
         prediction=prediction,
         summary=summary,
         values=values,
+        error=error,
     )
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="127.0.0.1", port=5000, debug=False)
