@@ -24,6 +24,11 @@ from mercedesbenzRIDGE import DATA_PATH, load_data
 
 DEFAULT_OUTPUT = PROJECT_ROOT / "docs" / "demo" / "model.json"
 DATASET_URL = "https://www.kaggle.com/datasets/danishammar/usa-mercedes-benz-prices-dataset"
+FLOAT_PRECISION = 8
+
+
+def _rounded(values) -> list[float]:
+    return [round(float(value), FLOAT_PRECISION) for value in values]
 
 
 def build_pipeline() -> Pipeline:
@@ -105,12 +110,12 @@ def export_payload() -> dict:
             "alpha": 10.0,
             "trained_rows": len(data),
             "features": ["Year", "Mileage", "Rating", "Model"],
-            "intercept": float(regressor.intercept_),
-            "numeric_mean": [float(value) for value in scaler.mean_],
-            "numeric_scale": [float(value) for value in scaler.scale_],
-            "numeric_coefficients": coefficients[:3],
+            "intercept": round(float(regressor.intercept_), FLOAT_PRECISION),
+            "numeric_mean": _rounded(scaler.mean_),
+            "numeric_scale": _rounded(scaler.scale_),
+            "numeric_coefficients": _rounded(coefficients[:3]),
             "models": models,
-            "model_coefficients": coefficients[3:],
+            "model_coefficients": _rounded(coefficients[3:]),
         },
         "evaluation": {
             "method": "Single deterministic 80/20 random holdout (random_state=42)",
