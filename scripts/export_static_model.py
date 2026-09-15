@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -149,6 +150,34 @@ def serialized_payload() -> str:
     return json.dumps(export_payload(), indent=2, sort_keys=True) + "\n"
 
 
+def payloads_equivalent(actual, expected) -> bool:
+    """Compare generated payloads while tolerating harmless BLAS float drift."""
+
+    if isinstance(expected, dict):
+        return (
+            isinstance(actual, dict)
+            and actual.keys() == expected.keys()
+            and all(payloads_equivalent(actual[key], value) for key, value in expected.items())
+        )
+    if isinstance(expected, list):
+        return (
+            isinstance(actual, list)
+            and len(actual) == len(expected)
+            and all(
+                payloads_equivalent(left, right)
+                for left, right in zip(actual, expected, strict=True)
+            )
+        )
+    if isinstance(expected, float):
+        return isinstance(actual, (int, float)) and math.isclose(
+            actual,
+            expected,
+            rel_tol=1e-7,
+            abs_tol=1e-4,
+        )
+    return actual == expected
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
@@ -157,7 +186,15 @@ def main() -> int:
     expected = serialized_payload()
 
     if args.check:
-        if not args.output.exists() or args.output.read_text() != expected:
+        if not args.output.exists():
+            print(f"Static model is stale: {args.output}")
+            return 1
+        try:
+            current_payload = json.loads(args.output.read_text())
+        except (OSError, json.JSONDecodeError):
+            print(f"Static model is unreadable: {args.output}")
+            return 1
+        if not payloads_equivalent(current_payload, json.loads(expected)):
             print(f"Static model is stale: {args.output}")
             return 1
         print(f"Static model is current: {args.output}")

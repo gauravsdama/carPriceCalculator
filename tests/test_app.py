@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from mercedesbenzRIDGE import app, load_data, predict_car_price, train_model
+from scripts.export_static_model import payloads_equivalent
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -82,3 +83,20 @@ def test_static_artifact_is_current_and_well_formed():
     assert artifact["dataset"]["rows"] == 2429
     assert artifact["dataset"]["license"] == "Apache-2.0"
     assert len(artifact["model"]["models"]) == len(artifact["model"]["model_coefficients"])
+
+
+def test_static_artifact_comparison_tolerates_only_small_numeric_drift():
+    expected = {"model": {"coefficient": 123.4567}, "models": ["GLC 300"]}
+
+    assert payloads_equivalent(
+        {"model": {"coefficient": 123.45671}, "models": ["GLC 300"]},
+        expected,
+    )
+    assert not payloads_equivalent(
+        {"model": {"coefficient": 123.5}, "models": ["GLC 300"]},
+        expected,
+    )
+    assert not payloads_equivalent(
+        {"model": {"coefficient": 123.4567}, "models": ["E-Class"]},
+        expected,
+    )
