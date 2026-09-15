@@ -100,3 +100,10 @@ def test_static_artifact_comparison_tolerates_only_small_numeric_drift():
         {"model": {"coefficient": 123.4567}, "models": ["E-Class"]},
         expected,
     )
+
+
+def test_static_demo_has_five_saved_examples():
+    html = (ROOT / "docs/demo/index.html").read_text()
+
+    assert html.count('class="preset"') == 5
+    assert "Five quick starts" in html

@@ -24,6 +24,7 @@ Human-owned source of truth for visible and accessibility text in the Flask app 
 | `static.heading` | Static page | Test a listing estimate in your browser. | inventory | `docs/demo/index.html` |
 | `static.intro` | Static page | This static demo runs a compact Ridge model trained on a saved snapshot of Mercedes-Benz asking prices. Nothing is sent to a server. | inventory | `docs/demo/index.html` |
 | `static.evidence` | Static evidence | Saved model evidence; Listings; Holdout MAE; Data updated | inventory | `docs/demo/index.html` |
+| `static.presets` | Static examples | Five quick starts; Load a saved vehicle example, then change any input.; GLC 300; C-Class C 300; E-Class E 350 4MATIC; GLE 350 4MATIC; S-Class S 580 4MATIC | inventory | `docs/demo/index.html` |
 | `static.fields` | Static form | Mercedes-Benz model; Loading models…; Model year; Dealer rating (0–5); Mileage (miles) | inventory | `docs/demo/index.html` |
 | `static.submit` | Static form | Estimate listing price | inventory | `docs/demo/index.html` |
 | `static.status` | Static states | Loading saved model…; Saved model ready.; Estimate updated from the saved model.; The saved model could not be loaded. {error} | inventory | `docs/demo/index.html`, `docs/demo/app.js` |
@@ -33,4 +34,3 @@ Human-owned source of truth for visible and accessibility text in the Flask app 
 | `static.disclaimer` | Static notes | Educational estimate from saved listing data—not a live valuation or buying recommendation. | approved | `docs/demo/index.html` |
 
 Long-form method, limitation, and dataset-attribution sentences under `static.limitations` are factual documentation displayed in the UI. Update this inventory whenever those statements change.
-

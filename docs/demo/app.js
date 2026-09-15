@@ -8,6 +8,7 @@ const ratingInput = document.querySelector("#rating");
 const button = document.querySelector("#estimate-button");
 const status = document.querySelector("#status");
 const estimate = document.querySelector("#estimate");
+const presets = [...document.querySelectorAll(".preset")];
 
 let artifact;
 
@@ -65,6 +66,19 @@ form.addEventListener("submit", (event) => {
   }
 });
 
+presets.forEach((preset) => {
+  preset.addEventListener("click", () => {
+    modelInput.value = preset.dataset.model;
+    yearInput.value = preset.dataset.year;
+    mileageInput.value = preset.dataset.mileage;
+    ratingInput.value = preset.dataset.rating;
+    presets.forEach((item) => item.classList.toggle("active", item === preset));
+    calculate();
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    form.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+  });
+});
+
 fetch("./model.json")
   .then((response) => {
     if (!response.ok) throw new Error(`Model request failed with status ${response.status}.`);
@@ -92,10 +106,12 @@ fetch("./model.json")
     document.querySelector("#data-date").textContent = artifact.dataset.source_last_updated;
     modelInput.disabled = false;
     button.disabled = false;
+    presets.forEach((preset) => {
+      preset.disabled = false;
+    });
     setStatus("Saved model ready.");
     calculate();
   })
   .catch((error) => {
     setStatus(`The saved model could not be loaded. ${error.message}`, true);
   });
-

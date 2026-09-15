@@ -44,7 +44,7 @@ Run successfully in this checkout on 2026-09-15:
 - `uv sync --locked`
 - `uv run ruff format --check .` — 9 Python files already formatted
 - `uv run ruff check .` — all checks passed
-- `uv run pytest` — 12 tests passed
+- `uv run pytest` — 13 tests passed
 - `uv run python scripts/export_static_model.py --check` — generated artifact is current
 - `uv run pip-audit` — no known vulnerabilities
 - Static HTTP smoke check — the complete demo loaded from `docs/demo` with no console warnings or errors
