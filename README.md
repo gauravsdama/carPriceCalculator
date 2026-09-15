@@ -6,13 +6,15 @@ The project is aimed at reviewers and learners who want to inspect a complete da
 
 ## Try the static demo
 
-The GitHub Pages candidate is in `docs/demo` and uses only relative files:
+[Open the live GitHub Pages demo](https://gauravsdama.github.io/carPriceCalculator/).
+
+The deployed source is in `docs/demo` and uses only relative files. To run it locally:
 
 ```bash
 python -m http.server 8000 --directory docs/demo
 ```
 
-Open `http://127.0.0.1:8000`. The browser loads `model.json` locally and sends no vehicle inputs to a server.
+Open `http://127.0.0.1:8000`. The browser loads `model.json` from the same static site and sends no vehicle inputs to an application server.
 
 ## Run the Flask app
 

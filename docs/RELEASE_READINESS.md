@@ -2,7 +2,7 @@
 
 Checkpoint: 2026-09-15
 
-Status: **release candidate; public deployment pending verification**.
+Status: **published and verified**.
 
 ## Product boundary
 
@@ -32,11 +32,10 @@ Neither surface is a vehicle valuation service. The data contains asking prices 
 - The static demo uses only relative assets and no network request except the user-selected dataset link.
 - UI copy is inventoried in `docs/product/UI_COPY.md`.
 
-## Remaining blockers
+## Known follow-ups
 
-1. GitHub Pages must complete successfully and the public URL must be browser-verified.
-2. The transformed dataset derivation should be reviewed against the original transformation notebook or script if one exists; none is present in repository history.
-3. The current holdout is educational evidence only. A stronger claim would require grouped and time-aware evaluation on licensed data with a collection date.
+1. The transformed dataset derivation should be reviewed against the original transformation notebook or script if one exists; none is present in repository history.
+2. The current holdout is educational evidence only. A stronger claim would require grouped and time-aware evaluation on licensed data with a collection date.
 
 ## Verification evidence
 
@@ -45,11 +44,12 @@ Run successfully in this checkout on 2026-09-15:
 - `uv sync --locked`
 - `uv run ruff format --check .` — 9 Python files already formatted
 - `uv run ruff check .` — all checks passed
-- `uv run pytest` — 11 tests passed
+- `uv run pytest` — 12 tests passed
 - `uv run python scripts/export_static_model.py --check` — generated artifact is current
 - `uv run pip-audit` — no known vulnerabilities
 - Static HTTP smoke check — the complete demo loaded from `docs/demo` with no console warnings or errors
 - Live Flask browser check — native invalid-input feedback appeared, and a valid GLC 300 request (2021, 50,000 miles, dealer rating 4.7) returned `$33,380` with no console warnings or errors
 - Responsive browser check at 390 × 844 — no horizontal overflow and the primary action remained 48 pixels tall
+- Public GitHub Pages check — `https://gauravsdama.github.io/carPriceCalculator/` loaded the saved model, recalculated an estimate after input changes, and produced no console warnings or errors
 
 The Flask Random Forest holdout reports R² `0.70`, RMSE `$16,669`, and MAE `$8,730`. The static Ridge holdout reports R² `0.7229`, RMSE `$16,143.77`, and MAE `$9,016.43`. Current desktop and mobile screenshots were captured during browser verification; they are test evidence, not committed marketing assets.
