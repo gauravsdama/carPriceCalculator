@@ -107,9 +107,7 @@ def test_browser_loads_contract_and_calculates_an_estimate(browser):
             mileage=48000,
             rating=4.5,
         )
-        assert (
-            browser.find_element(By.ID, "status").text == "Estimate updated."
-        )
+        assert browser.find_element(By.ID, "status").text == "Estimate updated."
 
 
 def test_browser_rejects_an_incompatible_artifact(browser, tmp_path):
