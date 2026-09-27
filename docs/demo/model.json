@@ -1,4 +1,5 @@
 {
+  "artifact_type": "car-price-calculator.static-model",
   "bounds": {
     "mileage": [
       100,
@@ -35,17 +36,19 @@
     "year": 2022
   },
   "evaluation": {
-    "mae_usd": 9016.43,
-    "method": "Single deterministic 80/20 random holdout (random_state=42)",
-    "r2": 0.7229,
-    "rmse_usd": 16143.77
+    "mae_usd": 8589.36,
+    "method": "Single deterministic grouped 80/20 holdout; identical feature vectors stay together (random_state=42)",
+    "r2": 0.799948,
+    "rmse_usd": 14570.38,
+    "test_rows": 490,
+    "train_rows": 1939
   },
   "limitations": [
     "Saved listing snapshot; not live market data.",
     "Asking prices are not verified sale prices.",
     "Dealer rating is not a vehicle-condition score.",
     "The static Ridge model differs from the Flask Random Forest.",
-    "A single random holdout does not establish performance over time or on unseen models."
+    "A single grouped holdout does not establish performance over time or on unseen models."
   ],
   "model": {
     "alpha": 10.0,
@@ -429,6 +432,11 @@
       4889.19615471,
       -6013.25968721,
       421.75648651
+    ],
+    "numeric_features": [
+      "Year",
+      "Mileage",
+      "Rating"
     ],
     "numeric_mean": [
       2021.77068753,

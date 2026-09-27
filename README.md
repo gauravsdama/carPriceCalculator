@@ -25,12 +25,12 @@ uv sync --locked
 uv run python mercedesbenzRIDGE.py
 ```
 
-Or with standard Python packaging tools:
+Or with standard Python packaging tools using the same `pyproject.toml` manifest:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install .
 python mercedesbenzRIDGE.py
 ```
 
@@ -46,7 +46,9 @@ uv run pytest
 uv run pip-audit
 ```
 
-The exported JSON is deterministic for the checked-in data and code. CI repeats lint, tests, artifact freshness, dependency audit, and a static-server smoke check.
+The exported JSON is deterministic for the checked-in data and code. Its versioned contract is in `docs/demo/model.schema.json`, and the browser validates semantic invariants before enabling the form. The end-to-end tests use a locally installed Chrome or Chromium browser.
+
+CI repeats lint, unit tests, artifact freshness across every declared Python version, plus a dependency audit and real Chromium calculation tests.
 
 ## Data and model limits
 
@@ -54,7 +56,7 @@ The repository includes 2,429 saved asking-price listings. `usa_mercedes_benz_pr
 
 The models use year, normalized model name, mileage, and dealer rating. They do not know vehicle condition, detailed trim, options, location, accident history, verified sale price, or market changes after the snapshot. Dealer rating describes the dealer rather than the vehicle.
 
-Reported metrics come from one deterministic random 80/20 holdout. Duplicate or related listings may cross that split, so the results do not establish future-market accuracy. The static Ridge estimator and Flask Random Forest intentionally report their methods separately.
+Reported metrics come from one deterministic grouped 80/20 holdout. Listings with identical model inputs stay on the same side of the split, preventing exact feature duplicates from leaking across evaluation. Related but non-identical listings may still span the split, so the results do not establish future-market accuracy. The static Ridge estimator and Flask Random Forest intentionally report their methods separately.
 
 See `THIRD_PARTY_NOTICES.md` for dataset provenance and `docs/RELEASE_READINESS.md` for the current publication decision.
 

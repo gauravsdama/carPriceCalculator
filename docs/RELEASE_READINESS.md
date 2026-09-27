@@ -2,7 +2,7 @@
 
 Checkpoint: 2026-09-15
 
-Status: **published and verified**.
+Status: **local release candidate; not yet published**.
 
 ## Product boundary
 
@@ -19,16 +19,17 @@ Neither surface is a vehicle valuation service. The data contains asking prices 
 
 ## Model evidence and limits
 
-- Flask model: 180-tree `RandomForestRegressor`, `min_samples_leaf=2`, deterministic 80/20 random split, numeric imputation/scaling, and one-hot model encoding.
+- Flask model: 180-tree `RandomForestRegressor`, `min_samples_leaf=2`, deterministic grouped 80/20 split, numeric passthrough, and one-hot model encoding.
 - Static demo: Ridge regression with `alpha=10`, evaluated on the same deterministic split and refit on all saved rows for export.
-- Both evaluations are single random holdouts from one snapshot. Duplicate or closely related listings may cross the split, and neither model has temporal, grouped-by-model, or external validation.
+- Both evaluations keep identical feature vectors on the same side, preventing duplicate-feature leakage. Closely related but non-identical listings may still cross the split, and neither model has temporal, grouped-by-model-name, or external validation.
 - Unknown models are rejected in both UIs. Inputs are bounded to saved-data ranges.
 
 ## Release package
 
 - Source dataset and deterministic model exporter are retained.
-- `uv.lock` is the rebuild lock; `requirements.txt` remains the minimal pip entry point.
-- CI runs lint, tests, artifact freshness, dependency audit, and a static-server smoke check.
+- `pyproject.toml` is the sole dependency manifest and `uv.lock` is the reproducible lock.
+- CI runs formatting, lint, unit tests, and artifact freshness across Python 3.11–3.14, plus a dependency audit and real Chrome calculation tests.
+- The static artifact has a checked-in JSON Schema plus matching semantic validation in Python and the browser.
 - The static demo uses only relative assets and no network request except the user-selected dataset link.
 - UI copy is inventoried in `docs/product/UI_COPY.md`.
 
@@ -42,14 +43,13 @@ Neither surface is a vehicle valuation service. The data contains asking prices 
 Run successfully in this checkout on 2026-09-15:
 
 - `uv sync --locked`
-- `uv run ruff format --check .` — 9 Python files already formatted
+- `uv run ruff format --check .` — 11 Python files already formatted
 - `uv run ruff check .` — all checks passed
-- `uv run pytest` — 13 tests passed
-- `uv run python scripts/export_static_model.py --check` — generated artifact is current
+- Python 3.11–3.14 — 15 non-browser tests passed on each declared version
+- Chrome end-to-end suite — 2 tests passed, covering calculations and incompatible-artifact rejection
+- Python 3.11–3.14 — generated artifact is current on each declared version
 - `uv run pip-audit` — no known vulnerabilities
-- Static HTTP smoke check — the complete demo loaded from `docs/demo` with no console warnings or errors
-- Live Flask browser check — native invalid-input feedback appeared, and a valid GLC 300 request (2021, 50,000 miles, dealer rating 4.7) returned `$33,380` with no console warnings or errors
-- Responsive browser check at 390 × 844 — no horizontal overflow and the primary action remained 48 pixels tall
-- Public GitHub Pages check — `https://gauravsdama.github.io/carPriceCalculator/` loaded the saved model, recalculated an estimate after input changes, and produced no console warnings or errors
 
-The Flask Random Forest holdout reports R² `0.70`, RMSE `$16,669`, and MAE `$8,730`. The static Ridge holdout reports R² `0.7229`, RMSE `$16,143.77`, and MAE `$9,016.43`. Current desktop and mobile screenshots were captured during browser verification; they are test evidence, not committed marketing assets.
+The Flask Random Forest grouped holdout reports R² `0.84`, RMSE `$13,172`, and MAE `$7,562`. The static Ridge grouped holdout reports R² `0.799948`, RMSE `$14,570.38`, and MAE `$8,589.36`. These changed metrics reflect a different deterministic grouped sample and should not be compared as evidence of model improvement.
+
+The public GitHub Pages site still represents published commit `847b84d`; this local release candidate has not been pushed or deployed.

@@ -6,9 +6,16 @@ import sys
 from pathlib import Path
 
 import pytest
+from jsonschema import Draft202012Validator
 
-from mercedesbenzRIDGE import app, load_data, predict_car_price, train_model
-from scripts.export_static_model import payloads_equivalent
+from car_price_data import (
+    MODEL_FEATURES,
+    DatasetValidationError,
+    grouped_evaluation_split,
+    load_data,
+)
+from mercedesbenzRIDGE import app, predict_car_price, train_model
+from scripts.export_static_model import payloads_equivalent, validate_artifact_contract
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -27,6 +34,32 @@ def test_dataset_and_model_are_deterministic():
 
     assert len(data) == 2429
     assert first == pytest.approx(second)
+
+
+def test_dataset_loader_rejects_schema_and_value_drift(tmp_path):
+    data_path = ROOT / "usa_mercedes_benz_prices.csv"
+    raw = data_path.read_text()
+
+    missing_column = tmp_path / "missing-column.csv"
+    missing_column.write_text(raw.replace(",Brand,", ",", 1))
+    with pytest.raises(DatasetValidationError, match="Dataset columns"):
+        load_data(missing_column)
+
+    invalid_year = tmp_path / "invalid-year.csv"
+    invalid_year.write_text(raw.replace("2021,Mercedes-Benz", "unknown,Mercedes-Benz", 1))
+    with pytest.raises(DatasetValidationError, match="Year contains a non-numeric value"):
+        load_data(invalid_year)
+
+
+def test_evaluation_split_keeps_duplicate_feature_vectors_together():
+    data = load_data()
+    features = data.loc[:, MODEL_FEATURES]
+    x_train, x_test, _, _ = grouped_evaluation_split(features, data["Price"])
+    train_keys = set(x_train.itertuples(index=False, name=None))
+    test_keys = set(x_test.itertuples(index=False, name=None))
+
+    assert train_keys.isdisjoint(test_keys)
+    assert len(x_train) + len(x_test) == len(data)
 
 
 def test_get_starts_without_a_prediction(client):
@@ -78,11 +111,22 @@ def test_static_artifact_is_current_and_well_formed():
         check=False,
     )
     artifact = json.loads((ROOT / "docs/demo/model.json").read_text())
+    schema = json.loads((ROOT / "docs/demo/model.schema.json").read_text())
 
     assert result.returncode == 0, result.stdout + result.stderr
+    Draft202012Validator.check_schema(schema)
+    Draft202012Validator(schema).validate(artifact)
+    validate_artifact_contract(artifact)
+    assert artifact["artifact_type"] == "car-price-calculator.static-model"
+    assert artifact["schema_version"] == 1
     assert artifact["dataset"]["rows"] == 2429
     assert artifact["dataset"]["license"] == "Apache-2.0"
     assert len(artifact["model"]["models"]) == len(artifact["model"]["model_coefficients"])
+
+    incompatible = json.loads(json.dumps(artifact))
+    incompatible["model"]["model_coefficients"].pop()
+    with pytest.raises(ValueError, match="align with model names"):
+        validate_artifact_contract(incompatible)
 
 
 def test_static_artifact_comparison_tolerates_only_small_numeric_drift():
@@ -106,4 +150,4 @@ def test_static_demo_has_five_saved_examples():
     html = (ROOT / "docs/demo/index.html").read_text()
 
     assert html.count('class="preset"') == 5
-    assert "Five quick starts" in html
+    assert "Examples" in html

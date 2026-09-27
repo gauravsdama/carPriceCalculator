@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gauravsdama.github.io/carPriceCalculator/model.schema.json",
+  "title": "Car Price Calculator static model artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "dataset",
+    "model",
+    "evaluation",
+    "bounds",
+    "defaults",
+    "limitations"
+  ],
+  "properties": {
+    "artifact_type": { "const": "car-price-calculator.static-model" },
+    "schema_version": { "const": 1 },
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "creator",
+        "source_url",
+        "source_version",
+        "source_last_updated",
+        "license",
+        "local_sha256",
+        "rows",
+        "note"
+      ],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "creator": { "type": "string", "minLength": 1 },
+        "source_url": { "type": "string", "format": "uri" },
+        "source_version": { "type": "integer", "minimum": 1 },
+        "source_last_updated": { "type": "string", "format": "date" },
+        "license": { "type": "string", "minLength": 1 },
+        "local_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "rows": { "type": "integer", "minimum": 1 },
+        "note": { "type": "string", "minLength": 1 }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "alpha",
+        "trained_rows",
+        "features",
+        "numeric_features",
+        "intercept",
+        "numeric_mean",
+        "numeric_scale",
+        "numeric_coefficients",
+        "models",
+        "model_coefficients"
+      ],
+      "properties": {
+        "method": { "const": "Ridge regression" },
+        "alpha": { "type": "number", "exclusiveMinimum": 0 },
+        "trained_rows": { "type": "integer", "minimum": 1 },
+        "features": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "Year" },
+            { "const": "Mileage" },
+            { "const": "Rating" },
+            { "const": "Model" }
+          ],
+          "items": false
+        },
+        "numeric_features": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "Year" },
+            { "const": "Mileage" },
+            { "const": "Rating" }
+          ],
+          "items": false
+        },
+        "intercept": { "type": "number" },
+        "numeric_mean": { "$ref": "#/$defs/numericTriple" },
+        "numeric_scale": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "type": "number", "exclusiveMinimum": 0 }
+        },
+        "numeric_coefficients": { "$ref": "#/$defs/numericTriple" },
+        "models": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 100 }
+        },
+        "model_coefficients": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1000,
+          "items": { "type": "number" }
+        }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "train_rows", "test_rows", "r2", "rmse_usd", "mae_usd"],
+      "properties": {
+        "method": { "type": "string", "minLength": 1 },
+        "train_rows": { "type": "integer", "minimum": 1 },
+        "test_rows": { "type": "integer", "minimum": 1 },
+        "r2": { "type": "number" },
+        "rmse_usd": { "type": "number", "minimum": 0 },
+        "mae_usd": { "type": "number", "minimum": 0 }
+      }
+    },
+    "bounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["year", "mileage", "rating", "price"],
+      "properties": {
+        "year": { "$ref": "#/$defs/numericPair" },
+        "mileage": { "$ref": "#/$defs/numericPair" },
+        "rating": { "$ref": "#/$defs/numericPair" },
+        "price": { "$ref": "#/$defs/numericPair" }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "year", "mileage", "rating"],
+      "properties": {
+        "model": { "type": "string", "minLength": 1 },
+        "year": { "type": "integer" },
+        "mileage": { "type": "number" },
+        "rating": { "type": "number" }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "numericPair": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "type": "number" }
+    },
+    "numericTriple": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": { "type": "number" }
+    }
+  }
+}

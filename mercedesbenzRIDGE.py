@@ -1,19 +1,16 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from pathlib import Path
 
 import pandas as pd
 from flask import Flask, render_template_string, request
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder
 
-DATA_PATH = Path(__file__).with_name("usa_mercedes_benz_prices.csv")
+from car_price_data import MODEL_FEATURES, grouped_evaluation_split, load_data
 
 app = Flask(__name__)
 
@@ -351,64 +348,23 @@ def _money(value: float) -> str:
     return f"${value:,.0f}"
 
 
-def load_data() -> pd.DataFrame:
-    df = pd.read_csv(DATA_PATH)
-    df = df.drop(columns=["Brand"], errors="ignore")
-
-    mileage_k = pd.to_numeric(df.pop("Mileage_k"), errors="coerce").fillna(0)
-    mileage_remainder = pd.to_numeric(df["Mileage"], errors="coerce").fillna(0)
-    df["Mileage"] = (mileage_k * 1000) + mileage_remainder
-
-    df["Model"] = df["Model"].astype(str).str.strip().str.replace(r"\s+", " ", regex=True)
-    df["Review Count"] = (
-        df["Review Count"].astype(str).str.replace(",", "", regex=False).astype(float)
-    )
-    df["Price"] = (
-        df["Price"]
-        .astype(str)
-        .str.replace("$", "", regex=False)
-        .str.replace(",", "", regex=False)
-        .str.strip()
-        .astype(float)
-    )
-    df["Year"] = pd.to_numeric(df["Year"], errors="coerce")
-    df["Rating"] = pd.to_numeric(df["Rating"], errors="coerce")
-
-    return df.dropna(subset=["Year", "Model", "Mileage", "Rating", "Price"])
-
-
 @lru_cache(maxsize=1)
 def train_model():
     df = load_data()
-    x = df[["Year", "Model", "Mileage", "Rating"]]
+    x = df.loc[:, MODEL_FEATURES]
     y = df["Price"]
-    x_train, x_test, y_train, y_test = train_test_split(
-        x,
-        y,
-        test_size=0.2,
-        random_state=42,
-    )
+    x_train, x_test, y_train, y_test = grouped_evaluation_split(x, y)
 
     preprocessor = ColumnTransformer(
         [
             (
                 "num",
-                Pipeline(
-                    [
-                        ("imputer", SimpleImputer(strategy="median")),
-                        ("scaler", StandardScaler()),
-                    ]
-                ),
+                "passthrough",
                 ["Year", "Mileage", "Rating"],
             ),
             (
                 "cat",
-                Pipeline(
-                    [
-                        ("imputer", SimpleImputer(strategy="most_frequent")),
-                        ("encoder", OneHotEncoder(handle_unknown="ignore")),
-                    ]
-                ),
+                OneHotEncoder(handle_unknown="ignore"),
                 ["Model"],
             ),
         ]
