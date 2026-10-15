@@ -1,8 +1,8 @@
 # Release readiness
 
-Checkpoint: 2026-09-15
+Checkpoint: 2026-10-14
 
-Status: **local release candidate; not yet published**.
+Status: **published and verified from `main`**.
 
 ## Product boundary
 
@@ -40,16 +40,16 @@ Neither surface is a vehicle valuation service. The data contains asking prices 
 
 ## Verification evidence
 
-Run successfully in this checkout on 2026-09-15:
+Run successfully in this checkout on 2026-10-14:
 
 - `uv sync --locked`
 - `uv run ruff format --check .` — 11 Python files already formatted
 - `uv run ruff check .` — all checks passed
-- Python 3.11–3.14 — 15 non-browser tests passed on each declared version
-- Chrome end-to-end suite — 2 tests passed, covering calculations and incompatible-artifact rejection
+- Python test suite — 18 tests passed locally, including 2 Chrome end-to-end tests
+- Published CI — Python 3.11–3.14, browser tests, artifact freshness, and dependency audit passed at `2527e9b`
 - Python 3.11–3.14 — generated artifact is current on each declared version
-- `uv run pip-audit` — no known vulnerabilities
+- `uv run pip-audit` — no known vulnerabilities after refreshing the locked Werkzeug and urllib3 transitive dependencies
 
 The Flask Random Forest grouped holdout reports R² `0.84`, RMSE `$13,172`, and MAE `$7,562`. The static Ridge grouped holdout reports R² `0.799948`, RMSE `$14,570.38`, and MAE `$8,589.36`. These changed metrics reflect a different deterministic grouped sample and should not be compared as evidence of model improvement.
 
-The public GitHub Pages site still represents published commit `847b84d`; this local release candidate has not been pushed or deployed.
+GitHub Pages deploys from `main`. At the start of this checkpoint, the published HTML, JavaScript, CSS, and model artifact matched commit `2527e9b` byte-for-byte.

@@ -151,3 +151,17 @@ def test_static_demo_has_five_saved_examples():
 
     assert html.count('class="preset"') == 5
     assert "Examples" in html
+
+
+def test_static_demo_includes_approved_release_disclosures():
+    html = (ROOT / "docs/demo/index.html").read_text()
+
+    assert (
+        "Educational estimate from saved listing data—not a live valuation or buying recommendation."
+        in html
+    )
+    assert (
+        "Evaluation uses one deterministic grouped 80/20 holdout, keeping identical model inputs "
+        "together. It does not measure future-market performance or accuracy on models absent from "
+        "the dataset." in html
+    )
